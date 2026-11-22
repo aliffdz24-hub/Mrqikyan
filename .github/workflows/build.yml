@@ -33,10 +33,14 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew :TMessagesProj_App:assembleAfatRelease --console=plain --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m"
+          if [ "$GITHUB_REF_NAME" = "test-standalone" ]; then
+            ./gradlew :TMessagesProj_AppStandalone:assembleAfatRelease --console=plain --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m"
+          else
+            ./gradlew :TMessagesProj_App:assembleAfatRelease --console=plain --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m"
+          fi
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: mr-qik-yan-apk
-          path: tg/TMessagesProj_App/build/outputs/apk/afat/release/*.apk
+          path: tg/TMessagesProj_App*/build/outputs/apk/afat/release/*.apk
           if-no-files-found: error
