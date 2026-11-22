@@ -1,0 +1,42 @@
+name: Build Mr qik yan APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout CI repo (overlay files)
+        uses: actions/checkout@v4
+      - name: Fetch upstream Telegram source (pinned commit)
+        run: |
+          git clone https://github.com/DrKLO/Telegram.git tg
+          cd tg
+          git checkout 21f7d109da6ab3506c9e9577f98c6a38771ab335
+          git submodule update --init --recursive
+      - name: Apply Mr qik yan overlay
+        run: cp -r overlay/. tg/
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK components
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+      - name: Build afat Release APK
+        working-directory: tg
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew :TMessagesProj_App:assembleAfatRelease --console=plain --max-workers=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=512m"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mr-qik-yan-apk
+          path: tg/TMessagesProj_App/build/outputs/apk/afat/release/*.apk
+          if-no-files-found: error
