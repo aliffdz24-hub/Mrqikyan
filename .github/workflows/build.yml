@@ -2,7 +2,7 @@ name: Build Mr qik yan APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, test-pkgapp ]
+    branches: [ main, test-keys ]
 jobs:
   build:
     runs-on: ubuntu-latest
